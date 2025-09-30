@@ -3,80 +3,87 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Crosshair, Heart, Zap, ChevronDown, ChevronUp, X } from 'lucide-react';
 
-// Item data structure - parsed from folder/file naming
+// Complete item data - T1: 500, T2: 1250, T3: 3000, T4: 6200
 const itemData = {
-  "close_quarters": {
-    name: "Close Quarters",
-    image: "/items/close_quarters/1600v.png",
-    cost: 1600,
+  // TIER 1: 500 SOULS
+  "extra_stamina": {
+    name: "Extra Stamina",
+    image: "/items/extra_stamina/500v.png",
+    cost: 800,
     tier: 1,
     category: "vitality",
-    stats: {
-      spiritResist: 20,
-      weaponDamageConditional: 20,
-      closeRange: 15
-    },
-    passive: "Deal additional Weapon Damage when in close range to your target.",
-    upgradesTo: "Point Blank"
+    stats: { stamina: 1, healthRegen: 1 }
   },
   "basic_magazine": {
     name: "Basic Magazine",
     image: "/items/basic_magazine/500g.png",
-    cost: 500,
+    cost: 800,
     tier: 1,
     category: "gun",
-    stats: {
-      ammo: 24,
-      weaponDamage: 15
-    }
-  },
-  "extra_stamina": {
-    name: "Extra Stamina",
-    image: "/items/extra_stamina/500v.png",
-    cost: 500,
-    tier: 1,
-    category: "vitality",
-    stats: {
-      stamina: 1,
-      healthRegen: 1
-    }
+    stats: { ammo: 24, weaponDamage: 7 }
   },
   "mystic_burst": {
     name: "Mystic Burst",
     image: "/items/mystic_burst/500s.png",
-    cost: 500,
+    cost: 800,
     tier: 1,
     category: "spirit",
-    stats: {
-      spiritPower: 4,
-      cooldownReduction: 4
-    }
+    stats: { spiritPower: 4, cooldownReduction: 4 }
+  },
+  "spirit_strike": {
+    name: "Spirit Strike",
+    image: "/items/spirit_strike/500s.png",
+    cost: 800,
+    tier: 1,
+    category: "spirit",
+    stats: { spiritPower: 5 },
+    passive: "+35% Melee Damage, melee deals 4% max health as Spirit Damage",
+    damageModifier: { type: "spiritSteal", value: 5 }
+  },
+  
+  "close_quarters": {
+    name: "Close Quarters",
+    image: "/items/close_quarters/1250g.png",
+    cost: 800,
+    tier: 1,
+    category: "gun",
+    stats: { weaponDamage: 8, stamina: 1 },
+    passive: "+20 Weapon Damage (Conditional) in close range"
   },
   "headshot_booster": {
     name: "Headshot Booster",
     image: "/items/headshot_booster/1250g.png",
     cost: 1250,
-    tier: 2,
+    tier: 1,
     category: "gun",
-    stats: {
-      headshotDamage: 40,
-      weaponDamage: 10
-    }
+    stats: { weaponDamage: 10, headshotDamage: 40 }
   },
-  "spirit_armor": {
-    name: "Spirit Armor",
-    image: "/items/spirit_armor/3000v.png",
+  
+  // TIER 3: 3000 SOULS
+  "inhibitor": {
+    name: "Inhibitor",
+    image: "/items/inhibitor/3000v.png",
     cost: 3000,
     tier: 3,
     category: "vitality",
-    stats: {
-      spiritResist: 35,
-      health: 150
-    }
+    stats: { health: 150, healthRegen: 3 },
+    passive: "Enemy hero hit deals -30% damage for 4s",
+    damageModifier: { type: "enemyDebuff", value: -30 }
+  },
+  
+  // TIER 4: 6200 SOULS
+  "echo_shard": {
+    name: "Echo Shard",
+    image: "/items/echo_shard/6200s.png",
+    cost: 6200,
+    tier: 4,
+    category: "spirit",
+    stats: { spiritPower: 14, cooldownReduction: 20 },
+    active: "Duplicate last cast ability"
   }
 };
 
-// Character data with abilities
+// Character data
 const characterData = {
   abrams: {
     name: "Abrams",
@@ -88,6 +95,7 @@ const characterData = {
         description: "Drain health from enemies in front of you while they are in the radius.",
         baseDamage: 32,
         spiritScaling: 0.605,
+        damageType: "spirit",
         stats: {
           dps: 32,
           duration: 8,
@@ -106,6 +114,7 @@ const characterData = {
         description: "Regenerate a portion of incoming damage over time.",
         baseDamage: 37,
         spiritScaling: 1.95,
+        damageType: "spirit",
         stats: {
           regenPercent: 20,
           duration: 12,
@@ -121,8 +130,9 @@ const characterData = {
         name: "Shoulder Charge",
         image: "/characters/Abrams/3.png",
         description: "Charge forward, damaging and pushing enemies.",
-        baseDamage: null,
-        spiritScaling: null,
+        baseDamage: 120,
+        spiritScaling: 0,
+        damageType: "ability",
         stats: {
           damage: 120,
           cooldown: 20,
@@ -140,6 +150,7 @@ const characterData = {
         description: "Leap high into the air and choose a ground location to crash into.",
         baseDamage: 55,
         spiritScaling: 2.33,
+        damageType: "spirit",
         stats: {
           damage: 200,
           stun: 1.2,
@@ -194,10 +205,12 @@ export default function DeadlockBuildMaker() {
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [selectedItems, setSelectedItems] = useState(Array(12).fill(null));
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [hoverTimer, setHoverTimer] = useState(null);
   const [abilityUpgrades, setAbilityUpgrades] = useState({});
   const [expandedAbilities, setExpandedAbilities] = useState({ 0: true, 1: true, 2: true, 3: true });
   const [itemSelectorOpen, setItemSelectorOpen] = useState(false);
   const [selectedSlotIndex, setSelectedSlotIndex] = useState(null);
+  const [damageModifiers, setDamageModifiers] = useState({});
 
   const addItemToSlot = (itemKey, slotIndex) => {
     const newItems = [...selectedItems];
@@ -216,6 +229,19 @@ export default function DeadlockBuildMaker() {
   const openItemSelector = (index) => {
     setSelectedSlotIndex(index);
     setItemSelectorOpen(true);
+  };
+
+  const handleItemHover = (item) => {
+    if (hoverTimer) clearTimeout(hoverTimer);
+    const timer = setTimeout(() => {
+      setHoveredItem(item);
+    }, 500);
+    setHoverTimer(timer);
+  };
+
+  const handleItemLeave = () => {
+    if (hoverTimer) clearTimeout(hoverTimer);
+    setHoveredItem(null);
   };
 
   const getSoulInvestment = () => {
@@ -256,7 +282,6 @@ export default function DeadlockBuildMaker() {
     const soulInvestment = getSoulInvestment();
     const spiritScaling = getSoulScalingBonus(soulInvestment.spirit);
     
-    // Base spirit power from soul investment + items that give spirit power
     let spiritPower = spiritScaling.spirit;
     selectedItems.forEach(itemKey => {
       if (itemKey && itemData[itemKey].stats?.spiritPower) {
@@ -278,11 +303,23 @@ export default function DeadlockBuildMaker() {
     return healthScaling.health;
   };
 
-  const calculateAbilityDamage = (ability) => {
-    if (!ability.baseDamage || !ability.spiritScaling) return null;
+  const calculateAbilityDamage = (ability, modifiers = {}) => {
+    if (!ability.baseDamage) return null;
     const spiritPower = getTotalSpiritPower();
-    const scaledDamage = ability.baseDamage * (1 + (spiritPower * ability.spiritScaling / 100));
-    return scaledDamage.toFixed(1);
+    let damage = ability.baseDamage;
+    
+    if (ability.spiritScaling > 0) {
+      damage = damage * (1 + (spiritPower * ability.spiritScaling / 100));
+    }
+    
+    // Apply damage modifiers
+    Object.values(modifiers).forEach(mod => {
+      if (mod.active) {
+        damage = damage * (1 + mod.value / 100);
+      }
+    });
+    
+    return damage.toFixed(1);
   };
 
   const getTotalSouls = () => {
@@ -295,15 +332,12 @@ export default function DeadlockBuildMaker() {
     const key = `${abilityIndex}-${upgradeIndex}`;
     const newUpgrades = { ...abilityUpgrades };
     
-    // Check if trying to enable an upgrade
     if (!newUpgrades[key]) {
-      // Auto-enable all previous upgrades
       for (let i = 0; i <= upgradeIndex; i++) {
         const autoKey = `${abilityIndex}-${i}`;
         newUpgrades[autoKey] = true;
       }
     } else {
-      // Disabling an upgrade - also disable all subsequent upgrades
       for (let i = upgradeIndex; i < 3; i++) {
         const subsequentKey = `${abilityIndex}-${i}`;
         newUpgrades[subsequentKey] = false;
@@ -362,12 +396,13 @@ export default function DeadlockBuildMaker() {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-8">
         <div className="bg-zinc-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-zinc-800 p-4 border-b border-zinc-700 flex justify-between items-center">
+          <div className="sticky top-0 bg-zinc-800 p-4 border-b border-zinc-700 flex justify-between items-center z-10">
             <h2 className="text-2xl font-bold text-white">Select Item</h2>
             <button
               onClick={() => {
                 setItemSelectorOpen(false);
                 setSelectedSlotIndex(null);
+                handleItemLeave();
               }}
               className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 transition-colors"
             >
@@ -380,8 +415,8 @@ export default function DeadlockBuildMaker() {
               <div
                 key={key}
                 className="relative"
-                onMouseEnter={() => setHoveredItem(item)}
-                onMouseLeave={() => setHoveredItem(null)}
+                onMouseEnter={() => handleItemHover(item)}
+                onMouseLeave={handleItemLeave}
               >
                 <button
                   onClick={() => addItemToSlot(key, selectedSlotIndex)}
@@ -448,15 +483,15 @@ export default function DeadlockBuildMaker() {
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
               <span className="text-red-400">Gun:</span>
-              <span className="text-white">{getSoulInvestment().gun}</span>
+              <span className="text-white">{getSoulInvestment().gun} <span className="text-green-400 ml-1">+{getWeaponDamageBonus()}%</span></span>
             </div>
             <div className="flex justify-between">
               <span className="text-green-400">Vitality:</span>
-              <span className="text-white">{getSoulInvestment().vitality}</span>
+              <span className="text-white">{getSoulInvestment().vitality} <span className="text-green-400 ml-1">+{getHealthBonus()}%</span></span>
             </div>
             <div className="flex justify-between">
               <span className="text-purple-400">Spirit:</span>
-              <span className="text-white">{getSoulInvestment().spirit}</span>
+              <span className="text-white">{getSoulInvestment().spirit} <span className="text-purple-400 ml-1">+{getSoulScalingBonus(getSoulInvestment().spirit).spirit}</span></span>
             </div>
             <div className="flex justify-between border-t border-zinc-600 pt-1 mt-2">
               <span className="text-amber-400 font-bold">Total Souls:</span>
@@ -472,7 +507,7 @@ export default function DeadlockBuildMaker() {
     if (!item || !itemSelectorOpen) return null;
     
     return (
-      <div className="fixed top-4 right-4 w-80 bg-gradient-to-b from-amber-700 to-amber-800 rounded-lg shadow-2xl border-4 border-amber-600 z-50">
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-96 bg-gradient-to-b from-amber-700 to-amber-800 rounded-lg shadow-2xl border-4 border-amber-600 z-50">
         <div className="bg-amber-600 p-3 rounded-t-lg">
           <h3 className="text-white font-bold text-xl">{item.name}</h3>
         </div>
@@ -500,10 +535,10 @@ export default function DeadlockBuildMaker() {
               <div className="text-gray-300 text-sm">{item.passive}</div>
             </div>
           )}
-          {item.upgradesTo && (
-            <div className="border-t border-zinc-700 pt-3">
-              <div className="text-white font-semibold">UPGRADES TO:</div>
-              <div className="text-amber-400">{item.upgradesTo}</div>
+          {item.active && (
+            <div>
+              <div className="text-amber-400 font-semibold italic mb-1">Active</div>
+              <div className="text-gray-300 text-sm">{item.active}</div>
             </div>
           )}
         </div>
@@ -513,90 +548,161 @@ export default function DeadlockBuildMaker() {
 
   const AbilityPanel = ({ ability, index, characterKey }) => {
     const isExpanded = expandedAbilities[index];
-    const scaledDamage = calculateAbilityDamage(ability);
+    const scaledDamage = calculateAbilityDamage(ability, damageModifiers);
     
     return (
-      <div className="bg-zinc-700 rounded-lg overflow-hidden">
+      <div className="bg-zinc-700 rounded-lg overflow-hidden flex flex-col h-full">
         <button
           onClick={() => setExpandedAbilities(prev => ({ ...prev, [index]: !prev[index] }))}
-          className="w-full p-4 flex items-center justify-between hover:bg-zinc-600 transition-all"
+          className="w-full p-3 flex flex-col items-center hover:bg-zinc-600 transition-all"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden">
-  <img 
-    src={ability.image} 
-    alt={ability.name} 
-    className="w-full h-full object-contain" 
-  />
-</div>
-
-            <div className="text-left">
-              <div className="text-white font-bold">{ability.name}</div>
-              {scaledDamage && (
-                <div className="text-amber-400 text-sm font-semibold">
-                  {scaledDamage} Damage
-                </div>
-              )}
-            </div>
+          <div className="w-16 h-16 bg-zinc-800 rounded-lg flex items-center justify-center overflow-hidden mb-2">
+            <img src={ability.image} alt={ability.name} className="w-full h-full object-contain" />
           </div>
-          {isExpanded ? <ChevronUp className="text-white" /> : <ChevronDown className="text-white" />}
-        </button>
-        
-        {isExpanded && (
-          <div className="p-4 bg-zinc-800">
-            <div className="text-gray-400 text-sm mb-3">{ability.description}</div>
-            
+          <div className="text-center w-full">
+            <div className="text-white font-bold text-sm">{ability.name}</div>
             {scaledDamage && (
-              <div className="bg-zinc-700 rounded-lg p-3 mb-3">
-                <div className="text-purple-400 font-semibold mb-2">Spirit Scaling</div>
-                <div className="text-sm text-gray-300">
-                  Base: <span className="text-white font-bold">{ability.baseDamage}</span>
-                </div>
-                <div className="text-sm text-gray-300">
-                  Spirit: <span className="text-purple-400 font-bold">{getTotalSpiritPower()}</span> × {ability.spiritScaling}
-                </div>
-                <div className="text-sm text-amber-400 font-bold mt-1">
-                  Total Damage: {scaledDamage}
-                </div>
+              <div className="text-amber-400 text-xs font-semibold mt-1">
+                {scaledDamage} Damage
               </div>
             )}
-            
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              {Object.entries(ability.stats).map(([stat, value]) => (
-                <div key={stat} className="flex justify-between">
-                  <span className="text-gray-400 text-sm capitalize">{stat.replace(/([A-Z])/g, ' $1')}:</span>
-                  <span className="text-white font-semibold text-sm">{value}</span>
+          </div>
+          <div className="mt-2">
+            {isExpanded ? <ChevronUp className="text-white" size={16} /> : <ChevronDown className="text-white" size={16} />}
+          </div>
+        </button>
+        
+        <div className="flex-grow flex flex-col justify-end">
+          {isExpanded && (
+            <div className="p-3 bg-zinc-800">
+              <div className="text-gray-400 text-xs mb-2">{ability.description}</div>
+              
+              {scaledDamage && (
+                <div className="bg-zinc-700 rounded-lg p-2 mb-2">
+                  <div className="text-purple-400 font-semibold text-xs mb-1">Spirit Scaling</div>
+                  <div className="text-xs text-gray-300">
+                    Base: <span className="text-white font-bold">{ability.baseDamage}</span>
+                  </div>
+                  <div className="text-xs text-gray-300">
+                    Spirit: <span className="text-purple-400 font-bold">{getTotalSpiritPower()}</span> × {ability.spiritScaling}
+                  </div>
+                  <div className="text-xs text-amber-400 font-bold mt-1">
+                    Total: {scaledDamage}
+                  </div>
                 </div>
-              ))}
+              )}
+              
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                {Object.entries(ability.stats).map(([stat, value]) => (
+                  <div key={stat} className="flex justify-between">
+                    <span className="text-gray-400 text-xs capitalize">{stat.replace(/([A-Z])/g, ' $1')}:</span>
+                    <span className="text-white font-semibold text-xs">{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            
+          )}
+          
+          <div className="p-3 bg-zinc-900 space-y-1 mt-auto">
+            <div className="text-purple-400 font-semibold text-xs mb-1">Upgrades</div>
+            {ability.upgrades.map((upgrade, upgradeIndex) => {
+              const upgradeKey = `${index}-${upgradeIndex}`;
+              const isActive = abilityUpgrades[upgradeKey];
+              
+              return (
+                <button
+                  key={upgradeIndex}
+                  onClick={() => toggleAbilityUpgrade(index, upgradeIndex)}
+                  className={`w-full p-1.5 rounded flex justify-between items-center transition-all text-xs ${
+                    isActive 
+                      ? 'bg-purple-600 hover:bg-purple-700' 
+                      : 'bg-zinc-700 hover:bg-zinc-600'
+                  }`}
+                >
+                  <span className="text-white truncate pr-1">{upgrade.name}</span>
+                  <span className={`font-bold whitespace-nowrap ${isActive ? 'text-green-300' : 'text-amber-400'}`}>
+                    {upgrade.points}pt
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const DamageCalculator = ({ characterKey }) => {
+    const char = characterData[characterKey];
+    const weaponBonus = getWeaponDamageBonus();
+    const baseGunDamage = char.stats.weapon.bulletDamage * (1 + weaponBonus / 100);
+    
+    return (
+      <div className="bg-zinc-800 rounded-xl p-6">
+        <h2 className="text-2xl font-bold text-white mb-4">Damage Calculator</h2>
+        
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-lg font-semibold text-amber-500 mb-3">Damage Modifiers</h3>
             <div className="space-y-2">
-              <div className="text-purple-400 font-semibold mb-2">Upgrades</div>
-              {ability.upgrades.map((upgrade, upgradeIndex) => {
-                const upgradeKey = `${index}-${upgradeIndex}`;
-                const isActive = abilityUpgrades[upgradeKey];
-                const canActivate = upgradeIndex === 0 || abilityUpgrades[`${index}-${upgradeIndex - 1}`];
+              {selectedItems.map((itemKey, idx) => {
+                if (!itemKey || !itemData[itemKey].damageModifier) return null;
+                const item = itemData[itemKey];
+                const modKey = `item_${idx}`;
                 
                 return (
-                  <button
-                    key={upgradeIndex}
-                    onClick={() => toggleAbilityUpgrade(index, upgradeIndex)}
-                    className={`w-full p-2 rounded-lg flex justify-between items-center transition-all ${
-                      isActive 
-                        ? 'bg-purple-600 hover:bg-purple-700' 
-                        : 'bg-zinc-700 hover:bg-zinc-600'
-                    }`}
-                  >
-                    <span className="text-white text-sm">{upgrade.name}</span>
-                    <span className={`text-sm font-bold ${isActive ? 'text-green-300' : 'text-amber-400'}`}>
-                      {upgrade.points} {upgrade.points === 1 ? 'pt' : 'pts'}
+                  <label key={idx} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={damageModifiers[modKey]?.active || false}
+                      onChange={(e) => {
+                        setDamageModifiers(prev => ({
+                          ...prev,
+                          [modKey]: {
+                            active: e.target.checked,
+                            value: item.damageModifier.value,
+                            name: item.name
+                          }
+                        }));
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-white text-sm">{item.name}</span>
+                    <span className="text-green-400 text-sm">
+                      {item.damageModifier.value > 0 ? '+' : ''}{item.damageModifier.value}%
                     </span>
-                  </button>
+                  </label>
                 );
               })}
             </div>
           </div>
-        )}
+          
+          <div>
+            <h3 className="text-lg font-semibold text-amber-500 mb-3">Calculated Damage</h3>
+            <div className="space-y-3">
+              <div className="bg-zinc-700 rounded-lg p-3">
+                <div className="text-red-400 font-semibold mb-2">Gun Damage</div>
+                <div className="text-white">
+                  Base: {baseGunDamage.toFixed(2)}
+                </div>
+              </div>
+              
+              {char.abilities.map((ability, idx) => {
+                const damage = calculateAbilityDamage(ability, damageModifiers);
+                if (!damage) return null;
+                
+                return (
+                  <div key={idx} className="bg-zinc-700 rounded-lg p-3">
+                    <div className="text-purple-400 font-semibold mb-1 text-sm">{ability.name}</div>
+                    <div className="text-white text-sm">
+                      Damage: {damage}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -696,12 +802,14 @@ export default function DeadlockBuildMaker() {
               <Zap className="text-purple-500" size={32} />
               <h2 className="text-3xl font-bold text-white">Abilities</h2>
             </div>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-4" style={{ gridAutoRows: '1fr' }}>
               {char.abilities.map((ability, idx) => (
                 <AbilityPanel key={idx} ability={ability} index={idx} characterKey={characterKey} />
               ))}
             </div>
           </div>
+
+          <DamageCalculator characterKey={characterKey} />
         </div>
 
         <ItemSelector />
