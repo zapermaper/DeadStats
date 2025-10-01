@@ -3,83 +3,669 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Crosshair, Heart, Zap, ChevronDown, ChevronUp, X } from 'lucide-react';
 
-// Complete item data - T1: 500, T2: 1250, T3: 3000, T4: 6200
+// Complete item data - T1: 800, T2: 1250, T3: 3000, T4: 6200
 const itemData = {
-  // TIER 1: 500 SOULS
-  "extra_stamina": {
-    name: "Extra Stamina",
-    image: "/items/extra_stamina/500v.png",
-    cost: 800,
-    tier: 1,
-    category: "vitality",
-    stats: { stamina: 1, healthRegen: 1 }
-  },
-  "basic_magazine": {
-    name: "Basic Magazine",
-    image: "/items/basic_magazine/500g.png",
-    cost: 800,
-    tier: 1,
-    category: "gun",
-    stats: { ammo: 24, weaponDamage: 7 }
-  },
-  "mystic_burst": {
-    name: "Mystic Burst",
-    image: "/items/mystic_burst/500s.png",
-    cost: 800,
-    tier: 1,
-    category: "spirit",
-    stats: { spiritPower: 4, cooldownReduction: 4 }
-  },
-  "spirit_strike": {
-    name: "Spirit Strike",
-    image: "/items/spirit_strike/500s.png",
-    cost: 800,
-    tier: 1,
-    category: "spirit",
-    stats: { spiritPower: 5 },
-    passive: "+35% Melee Damage, melee deals 4% max health as Spirit Damage",
-    damageModifier: { type: "spiritSteal", value: 5 }
-  },
-  
+  // ===== TIER 1: 800 SOULS - WEAPON =====
   "close_quarters": {
     name: "Close Quarters",
-    image: "/items/close_quarters/1250g.png",
+    image: "/items/close_quarters/800g.png",
     cost: 800,
     tier: 1,
     category: "gun",
-    stats: { weaponDamage: 8, stamina: 1 },
-    passive: "+20 Weapon Damage (Conditional) in close range"
+    stats: { meleeResist: 20 },
+    passive: {
+      weaponDamageConditional: 20,
+      closeRangeBonus: 15,
+      conditionLabel: "In Close Range"
+    },
+    upgradesTo: ["Point Blank"]
+  },
+  "extended_magazine": {
+    name: "Extended Magazine",
+    image: "/items/extended_magazine/800g.png",
+    cost: 800,
+    tier: 1,
+    category: "gun",
+    stats: { ammo: 30, weaponDamage: 6 },
+    upgradesTo: ["Titanic Magazine", "Escalating Resilience"]
   },
   "headshot_booster": {
     name: "Headshot Booster",
-    image: "/items/headshot_booster/1250g.png",
-    cost: 1250,
+    image: "/items/headshot_booster/800g.png",
+    cost: 800,
     tier: 1,
     category: "gun",
-    stats: { weaponDamage: 10, headshotDamage: 40 }
+    stats: { bonusHealth: 40 },
+    passive: {
+      headshotBonusDamage: 50,
+      cooldown: 8,
+      conditionLabel: "Next Headshot on Hero",
+      description: "Your next headshot against an enemy Hero deals bonus weapon damage."
+    },
+    upgradesTo: ["Headhunter"]
   },
-  
-  // TIER 3: 3000 SOULS
-  "inhibitor": {
-    name: "Inhibitor",
-    image: "/items/inhibitor/3000v.png",
-    cost: 3000,
-    tier: 3,
-    category: "vitality",
-    stats: { health: 150, healthRegen: 3 },
-    passive: "Enemy hero hit deals -30% damage for 4s",
-    damageModifier: { type: "enemyDebuff", value: -30 }
+  "high_velocity_rounds": {
+    name: "High-Velocity Rounds",
+    image: "/items/high_velocity_rounds/800g.png",
+    cost: 800,
+    tier: 1,
+    category: "gun",
+    stats: { bulletVelocity: 35, fireRate: 5 },
+    upgradesTo: ["Express Shot", "Armor Piercing Rounds"]
   },
-  
-  // TIER 4: 6200 SOULS
-  "echo_shard": {
-    name: "Echo Shard",
-    image: "/items/echo_shard/6200s.png",
-    cost: 6200,
-    tier: 4,
+  "monster_rounds": {
+    name: "Monster Rounds",
+    image: "/items/monster_rounds/800g.png",
+    cost: 800,
+    tier: 1,
+    category: "gun",
+    stats: { 
+      weaponDamageVsNPCs: 25,
+      bulletResistVsNPCs: 25,
+      outOfCombatRegen: 1
+    },
+    upgradesTo: ["Cultist Sacrifice"]
+  },
+  "rapid_rounds": {
+    name: "Rapid Rounds",
+    image: "/items/rapid_rounds/800g.png",
+    cost: 800,
+    tier: 1,
+    category: "gun",
+    stats: { fireRate: 10 },
+    upgradesTo: ["Burst Fire", "Swift Striker"]
+  },
+  "restorative_shot": {
+    name: "Restorative Shot",
+    image: "/items/restorative_shot/800g.png",
+    cost: 800,
+    tier: 1,
+    category: "gun",
+    stats: { weaponDamage: 6 },
+    passive: {
+      healOnBullet: 50,
+      healOnBulletNPC: 15,
+      cooldown: 6,
+      description: "Your next bullet will heal you based on what target you hit."
+    },
+    upgradesTo: ["Medic Bullets"]
+  },
+
+  // ===== TIER 2: 1600 SOULS - WEAPON =====
+  "active_reload": {
+    name: "Active Reload",
+    image: "/items/active_reload/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { maxAmmo: 20 },
+    passive: {
+      fireRateConditional: 25,
+      bulletLifestealConditional: 18,
+      duration: 7,
+      cooldown: 12,
+      conditionLabel: "Perfect Reload Timing",
+      description: "While reloading, pressing Reload button during the highlighted portion will instantly finish your reload and give you Fire Rate, Bullet Lifesteal and Move Speed."
+    }
+  },
+  "backstabber": {
+    name: "Backstabber",
+    image: "/items/backstabber/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { bonusHealth: 75, footstepSoundReduction: 50 },
+    passive: {
+      spiritDamagePerSecond: 17,
+      bulletResistReduction: 6,
+      moveSpeedConditional: 1.75,
+      debuffDuration: 5,
+      bonusRadius: 25,
+      cooldown: 5,
+      conditionLabel: "Attacking from Behind",
+      description: "Attacking enemies from behind with your weapon or melee opens a wound dealing spirit damage over time and reducing their bullet resist. During this time, if you or any allies are near the target, will see them through walls and be given bonus move speed."
+    }
+  },
+  "fleetfoot": {
+    name: "Fleetfoot",
+    image: "/items/fleetfoot/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { slideDistance: 35, bulletResist: 6 },
+    passive: {
+      description: "Removes the Move Speed penalty while shooting."
+    },
+    active: {
+      moveSpeedConditional: 3.5,
+      slowResist: 40,
+      duration: 6,
+      cooldown: 16,
+      conditionLabel: "Fleetfoot Active",
+      description: "Gain bonus Move Speed and Slow Resistance."
+    }
+  },
+  "intensifying_magazine": {
+    name: "Intensifying Magazine",
+    image: "/items/intensifying_magazine/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { maxAmmo: 20 },
+    passive: {
+      weaponDamageConditional: 45,
+      timeForMax: 3,
+      conditionLabel: "Continuous Fire",
+      description: "Increases Weapon Damage as you continuously fire your weapon."
+    }
+  },
+  "kinetic_dash": {
+    name: "Kinetic Dash",
+    image: "/items/kinetic_dash/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { stamina: 1, staminaRecovery: 12 },
+    passive: {
+      fireRateConditional: 30,
+      temporaryAmmoConditional: 8,
+      duration: 7,
+      cooldown: 7,
+      conditionLabel: "After Dash Jump",
+      description: "When you Dash Jump you gain Fire Rate and bonus Ammo until your next reload. Lasts up to 7s."
+    },
+    upgradesFrom: ["Extra Stamina"]
+  },
+  "long_range": {
+    name: "Long Range",
+    image: "/items/long_range/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { sprintSpeed: 1 },
+    passive: {
+      weaponDamageConditional: 40,
+      minDistance: 15,
+      conditionLabel: "Beyond Min Distance",
+      description: "Deal additional Weapon Damage when beyond a minimum distance from your target."
+    },
+    upgradesTo: ["Sharpshooter"]
+  },
+  "melee_charge": {
+    name: "Melee Charge",
+    image: "/items/melee_charge/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { heavyMeleeDistance: 50, meleeDamage: 10, bulletResist: 6 },
+    passive: {
+      bonusHeavyMeleeConditional: 25,
+      cooldown: 7,
+      conditionLabel: "Next Heavy Melee",
+      description: "Your next Heavy Melee attack against an enemy deals increased damage."
+    },
+    upgradesTo: ["Crushing Fists"]
+  },
+  "mystic_shot": {
+    name: "Mystic Shot",
+    image: "/items/mystic_shot/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { spiritPower: 7 },
+    passive: {
+      spiritDamagePerBullet: 60,
+      spiritScaling: 0.65,
+      cooldown: 8,
+      description: "Your next bullet deals bonus Spirit Damage."
+    },
+    upgradesTo: ["Crackshot"]
+  },
+  "opening_rounds": {
+    name: "Opening Rounds",
+    image: "/items/opening_rounds/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { spiritPower: 7 },
+    passive: {
+      weaponDamageConditional: 40,
+      healthThreshold: 50,
+      conditionLabel: "Target Above 50% Health",
+      description: "Your attacks have additional Weapon Damage against enemies above 50% health."
+    },
+    upgradesTo: ["Pristine Emblem"]
+  },
+  "slowing_bullets": {
+    name: "Slowing Bullets",
+    image: "/items/slowing_bullets/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { fireRate: 7 },
+    passive: {
+      moveSpeedReduction: 30,
+      dashDistanceReduction: 20,
+      debuffDuration: 3.5,
+      buildUpPerShot: 0.77,
+      description: "Your bullets build up a Movement Slow on enemies."
+    },
+    upgradesTo: ["Slowing Bullets"]
+  },
+  "spirit_shredder_bullets": {
+    name: "Spirit Shredder Bullets",
+    image: "/items/spirit_shredder_bullets/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { },
+    passive: {
+      spiritResistReduction: 8,
+      spiritLifestealConditional: 8,
+      debuffDuration: 8,
+      conditionLabel: "Bullets Hit Enemy",
+      description: "Your bullets apply a debuff that reduces the Spirit Resist of the target and grants you and your allies Spirit Lifesteal against them."
+    },
+    upgradesTo: ["Spirit Rend"]
+  },
+  "split_shot": {
+    name: "Split Shot",
+    image: "/items/split_shot/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { },
+    active: {
+      multishotCount: 5,
+      weaponDamagePerStack: 10,
+      maxStacks: 6,
+      stackDuration: 12,
+      buffDuration: 5,
+      cooldown: 14,
+      conditionLabel: "Multishot Active",
+      description: "Make your weapon fire multishot. Hitting more than one Hero per attack will grant a stacking weapon damage bonus."
+    },
+    upgradesTo: ["Split Shot"]
+  },
+  "swift_striker": {
+    name: "Swift Striker",
+    image: "/items/swift_striker/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { fireRate: 20, sprintSpeed: 1 },
+    upgradesFrom: ["Rapid Rounds"]
+  },
+  "titanic_magazine": {
+    name: "Titanic Magazine",
+    image: "/items/titanic_magazine/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { ammo: 90, weaponDamage: 12 },
+    upgradesFrom: ["Extended Magazine"]
+  },
+  "weakening_headshot": {
+    name: "Weakening Headshot",
+    image: "/items/weakening_headshot/1600g.png",
+    cost: 1600,
+    tier: 2,
+    category: "gun",
+    stats: { bonusHealth: 75 },
+    passive: {
+      bulletResistReduction: 13,
+      debuffDuration: 12,
+      description: "Landing a Headshot on Heroes reduces their Bullet Resist."
+    },
+    upgradesTo: ["Crippling Headshot"]
+  },
+
+  // ===== TIER 1: 800 SOULS - SPIRIT =====
+  "extra_charge": {
+    name: "Extra Charge",
+    image: "/items/extra_charge/800s.png",
+    cost: 800,
+    tier: 1,
     category: "spirit",
-    stats: { spiritPower: 14, cooldownReduction: 20 },
-    active: "Duplicate last cast ability"
+    stats: { bonusAbilityCharges: 1, spiritPowerForChargedAbilities: 7 },
+    upgradesTo: ["Rapid Recharge"]
+  },
+  "extra_spirit": {
+    name: "Extra Spirit",
+    image: "/items/extra_spirit/800s.png",
+    cost: 800,
+    tier: 1,
+    category: "spirit",
+    stats: { spiritPower: 10 },
+    upgradesTo: ["Improved Spirit", "Surge of Power"]
+  },
+  "mystic_burst": {
+    name: "Mystic Burst",
+    image: "/items/mystic_burst/800s.png",
+    cost: 800,
+    tier: 1,
+    category: "spirit",
+    stats: { },
+    passive: {
+      bonusDamageThreshold: 80,
+      bonusDamage: 40,
+      cooldown: 12,
+      description: "Charges up over time with bonus spirit damage, causing abilities dealing more than 80 damage to deal additional damage."
+    },
+    upgradesTo: ["Tankbuster"]
+  },
+  "mystic_expansion": {
+    name: "Mystic Expansion",
+    image: "/items/mystic_expansion/800s.png",
+    cost: 800,
+    tier: 1,
+    category: "spirit",
+    stats: { abilityRange: 20 },
+    description: "Imbue an ability to increase its range and effect radius.",
+    upgradesTo: ["Greater Expansion"]
+  },
+  "rusted_barrel": {
+    name: "Rusted Barrel",
+    image: "/items/rusted_barrel/800s.png",
+    cost: 800,
+    tier: 1,
+    category: "spirit",
+    stats: { bonusHealth: 60, sprintSpeed: 0.5 },
+    active: {
+      description: "Target an enemy to reduce their Fire Rate and Bullet Resistance.",
+      cooldown: 20,
+      fireRateReduction: 35,
+      bulletResistReduction: 6,
+      duration: 5,
+      castRange: 28
+    },
+    upgradesTo: ["Disarming Hex"]
+  },
+  "spirit_strike": {
+    name: "Spirit Strike",
+    image: "/items/spirit_strike/800s.png",
+    cost: 800,
+    tier: 1,
+    category: "spirit",
+    stats: { },
+    passive: {
+      meleeSpiritDamage: 40,
+      spiritResistReduction: 6,
+      duration: 6,
+      cooldown: 8,
+      description: "When you perform a Light or Heavy Melee attack against a hero, deal extra Spirit Damage with the attack and reduce the target's Spirit Resist. Cooldown is 2x longer for Light Melee hits."
+    },
+    upgradesTo: ["Spirit Snatch"]
+  },
+
+  // ===== TIER 2: 1600 SOULS - SPIRIT =====
+  "arcane_surge": {
+    name: "Arcane Surge",
+    image: "/items/arcane_surge/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { stamina: 1, staminaRecovery: 12 },
+    passive: {
+      abilityRange: 15,
+      abilityDuration: 15,
+      spiritPowerConditional: 15,
+      duration: 7,
+      conditionLabel: "After Dash Jump",
+      description: "When you Dash Jump the next ability you use will have bonus Range, Duration, and Spirit Power. Lasts up to 7s."
+    },
+    upgradesFrom: ["Extra Stamina"]
+  },
+  "bullet_resist_shredder": {
+    name: "Bullet Resist Shredder",
+    image: "/items/bullet_resist_shredder/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { bonusHealth: 90, bulletResist: 7 },
+    passive: {
+      bulletResistReduction: 13,
+      duration: 8,
+      conditionLabel: "Spirit Damage Reduces Bullet Resist",
+      description: "Reduces Bullet Resist on enemies when you deal Spirit Damage."
+    }
+  },
+  "cold_front": {
+    name: "Cold Front",
+    image: "/items/cold_front/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { spiritResist: 6 },
+    active: {
+      damage: 100,
+      spiritScaling: 0.47,
+      movementSlowConditional: 60,
+      duration: 4,
+      endRadius: 12,
+      cooldown: 24,
+      description: "Release an expanding ice blast that deals Spirit Damage and Slows targets it hits."
+    },
+    upgradesTo: ["Arctic Blast"]
+  },
+  "compress_cooldown": {
+    name: "Compress Cooldown",
+    image: "/items/compress_cooldown/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { },
+    passive: {
+      cooldownReduction: 22,
+      description: "Imbue an ability to reduce its Cooldown."
+    },
+    upgradesTo: ["Superior Cooldown"]
+  },
+  "duration_extender": {
+    name: "Duration Extender",
+    image: "/items/duration_extender/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { },
+    passive: {
+      abilityDuration: 22,
+      description: "Imbue an ability to increase its Duration."
+    },
+    upgradesTo: ["Superior Duration"]
+  },
+  "improved_spirit": {
+    name: "Improved Spirit",
+    image: "/items/improved_spirit/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { spiritPower: 18, outOfCombatRegen: 1.5 },
+    upgradesFrom: ["Extra Spirit"],
+    upgradesTo: ["Boundless Spirit"]
+  },
+  "mystic_slow": {
+    name: "Mystic Slow",
+    image: "/items/mystic_slow/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { bonusHealth: 50, sprintSpeed: 1 },
+    passive: {
+      movementSlowConditional: 30,
+      duration: 2,
+      conditionLabel: "Spirit Damage Slows",
+      description: "When the target takes Spirit Damage, they have their Move Speed reduced."
+    },
+    upgradesTo: ["Lightning Scroll"]
+  },
+  "mystic_vulnerability": {
+    name: "Mystic Vulnerability",
+    image: "/items/mystic_vulnerability/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { spiritResist: 8 },
+    passive: {
+      spiritResistReduction: 8,
+      duration: 6,
+      conditionLabel: "Spirit Damage Reduces Spirit Resist",
+      description: "When the target takes Spirit Damage, they have their Spirit Resist reduced."
+    },
+    upgradesTo: ["Escalating Exposure"]
+  },
+  "quicksilver_reload": {
+    name: "Quicksilver Reload",
+    image: "/items/quicksilver_reload/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { },
+    passive: {
+      bonusSpiritDamage: 55,
+      fireRateBonus: 10,
+      ammoReloaded: 100,
+      chargeUpTime: 18,
+      description: "Your imbued ability charges up over time with bonus spirit damage, bonus fire rate, and bonus bullets on use."
+    },
+    upgradesTo: ["Mercurial Magnum"]
+  },
+  "slowing_hex": {
+    name: "Slowing Hex",
+    image: "/items/slowing_hex/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { sprintSpeed: 0.5 },
+    active: {
+      moveSpeedReduction: 20,
+      dashDistanceReduction: 30,
+      castRange: 25,
+      duration: 3.5,
+      cooldown: 30,
+      description: "Slows movement of enemy target. Also Silences their movement-based items and abilities. Does not affect target's stamina usage."
+    },
+    upgradesTo: ["Vortex Web"]
+  },
+  "spirit_sap": {
+    name: "Spirit Sap",
+    image: "/items/spirit_sap/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { bonusHealth: 75 },
+    active: {
+      spiritResistReduction: 12,
+      spiritPowerReduction: 24,
+      castRange: 40,
+      duration: 12,
+      cooldown: 30,
+      description: "Target an enemy to reduce their Spirit Resist and Spirit Power."
+    },
+    upgradesTo: ["Silence Wave"]
+  },
+  "suppressor": {
+    name: "Suppressor",
+    image: "/items/suppressor/1600s.png",
+    cost: 1600,
+    tier: 2,
+    category: "spirit",
+    stats: { spiritPower: 6, bonusHealth: 75 },
+    passive: {
+      fireRateReduction: 30,
+      duration: 4,
+      conditionLabel: "Spirit Damage Reduces Fire Rate",
+      description: "When you deal Spirit Damage to enemies, you also reduce their Fire Rate."
+    }
+  },
+
+  // ===== TIER 1: 800 SOULS - VITALITY =====
+  "extra_health": {
+    name: "Extra Health",
+    image: "/items/extra_health/800v.png",
+    cost: 800,
+    tier: 1,
+    category: "vitality",
+    stats: { bonusHealth: 175 },
+    upgradesTo: ["Fortitude", "Colossus"]
+  },
+  "extra_regen": {
+    name: "Extra Regen",
+    image: "/items/extra_regen/800v.png",
+    cost: 800,
+    tier: 1,
+    category: "vitality",
+    stats: { healthRegen: 3 },
+    upgradesTo: ["Healing Booster"]
+  },
+  "extra_stamina": {
+    name: "Extra Stamina",
+    image: "/items/extra_stamina/800v.png",
+    cost: 800,
+    tier: 1,
+    category: "vitality",
+    stats: { stamina: 1, staminaRecovery: 12 },
+    upgradesTo: ["Stamina Mastery", "Kinetic Dash", "Arcane Surge"]
+  },
+  "healing_rite": {
+    name: "Healing Rite",
+    image: "/items/healing_rite/800v.png",
+    cost: 800,
+    tier: 1,
+    category: "vitality",
+    stats: { },
+    active: {
+      description: "Grant Regen and Sprint Speed to the target. Heals 300 HP and gives +0.93 Spirit Power over 17s. Gets dispelled if you take damage from enemy players or objectives. Can be self-cast.",
+      cooldown: 70,
+      healAmount: 300,
+      spiritPowerBonus: 0.93,
+      duration: 17
+    },
+    passive: {
+      sprintSpeedConditional: 2,
+      conditionLabel: "During Healing Rite"
+    },
+    upgradesTo: ["Rescue Beam", "Healing Nova"]
+  },
+  "melee_lifesteal": {
+    name: "Melee Lifesteal",
+    image: "/items/melee_lifesteal/800v.png",
+    cost: 800,
+    tier: 1,
+    category: "vitality",
+    stats: { meleeDamage: 12 },
+    passive: {
+      meleeHeal: 100,
+      cooldown: 8,
+      description: "Your next Melee attack heals you. This heal is 30% effective vs non-heroes. Cooldown is 2x as long for Light Melee hits."
+    },
+    upgradesTo: ["Lifestrike"]
+  },
+  "rebuttal": {
+    name: "Rebuttal",
+    image: "/items/rebuttal/800v.png",
+    cost: 800,
+    tier: 1,
+    category: "vitality",
+    stats: { bonusHealth: 75 },
+    passive: {
+      parryDuration: 2,
+      parryCooldown: 6,
+      bonusDamageConditional: 30,
+      buffDuration: 6,
+      conditionLabel: "After successful Parry"
+    },
+    description: "On a successful Parry against an enemy Hero, Heal yourself for the damage parried and gain increased damage.",
+    upgradesTo: ["Melee Charge", "Melee Rebuttal"]
+  },
+  "sprint_boots": {
+    name: "Sprint Boots",
+    image: "/items/sprint_boots/800v.png",
+    cost: 800,
+    tier: 1,
+    category: "vitality",
+    stats: { sprintSpeed: 2, outOfCombatRegen: 2 },
+    upgradesTo: ["Trophy Collector", "Enduring Speed"]
   }
 };
 
@@ -92,75 +678,86 @@ const characterData = {
       {
         name: "Siphon Life",
         image: "/characters/Abrams/1.png",
-        description: "Drain health from enemies in front of you while they are in the radius.",
+        description: "Drain health from nearby enemies in front of you, dealing spirit damage over time and healing for a portion of the damage dealt.",
         baseDamage: 32,
-        spiritScaling: 0.605,
+        spiritScaling: 0.0465,
         damageType: "spirit",
         stats: {
           dps: 32,
-          duration: 8,
-          cooldown: 32,
-          range: 12
+          duration: 4,
+          cooldown: 42,
+          range: 10,
+          lifesteal: 0.6,
+          lifestealVsNonHeroes: 0.3
         },
         upgrades: [
-          { name: "+2s Duration", points: 1 },
-          { name: "+20 DPS", points: 2 },
-          { name: "-13s Cooldown", points: 5 }
-        ]
-      },
-      {
-        name: "Infernal Resilience",
-        image: "/characters/Abrams/2.png",
-        description: "Regenerate a portion of incoming damage over time.",
-        baseDamage: 37,
-        spiritScaling: 1.95,
-        damageType: "spirit",
-        stats: {
-          regenPercent: 20,
-          duration: 12,
-          cooldown: 27
-        },
-        upgrades: [
-          { name: "+15% Regen", points: 1 },
-          { name: "+14s Duration", points: 2 },
-          { name: "+1 Stamina", points: 5 }
+          { name: "-19s Cooldown", points: 1 },
+          { name: "+2s Duration", points: 2 },
+          { name: "+38 Damage Per Second", points: 5 }
         ]
       },
       {
         name: "Shoulder Charge",
-        image: "/characters/Abrams/3.png",
-        description: "Charge forward, damaging and pushing enemies.",
-        baseDamage: 120,
-        spiritScaling: 0,
-        damageType: "ability",
+        image: "/characters/Abrams/2.png",
+        description: "Charge forward, pulling enemies you hit. Pushing a hero into a wall applies stun.",
+        baseDamage: 37,
+        spiritScaling: 1.95,
+        damageType: "spirit",
         stats: {
-          damage: 120,
-          cooldown: 20,
-          range: 25
+          damage: 37,
+          chargeTime: 1.4,
+          cooldown: 37
         },
         upgrades: [
-          { name: "+30 Damage", points: 1 },
-          { name: "-8s Cooldown", points: 2 },
-          { name: "+15m Cast Range", points: 5 }
+          { 
+            name: "On Hero Collide: +25% Weapon Damage for 8s", 
+            points: 1,
+            conditionalDamage: {
+              label: "After Shoulder Charge Hit",
+              weaponDamageMultiplier: 1.25,
+              duration: 8,
+              appliesTo: ["gun"]
+            }
+          },
+          { name: "On Wall Hit: +0.45s Stun Duration", points: 2 },
+          { name: "-22s Cooldown", points: 5 }
+        ]
+      },
+      {
+        name: "Infernal Resilience",
+        image: "/characters/Abrams/3.png",
+        description: "Gain bonus defensive attributes. Taking damage grants temporary regeneration for a portion of the damage taken.",
+        baseDamage: 0,
+        spiritScaling: 0,
+        damageType: "passive",
+        stats: {
+          damageRegenPercent: 13,
+          regenTime: 20,
+          flatRegen: 1
+        },
+        upgrades: [
+          { name: "+1.5 Health Regen", points: 1 },
+          { name: "+150 Max Health", points: 2 },
+          { name: "+7% Damage Regenerated", points: 5 }
         ]
       },
       {
         name: "Seismic Impact",
         image: "/characters/Abrams/4.png",
-        description: "Leap high into the air and choose a ground location to crash into.",
+        description: "Leap high into the air before crashing into the ground, dealing spirit damage and applying stun.",
         baseDamage: 55,
         spiritScaling: 2.33,
         damageType: "spirit",
         stats: {
-          damage: 200,
-          stun: 1.2,
-          cooldown: 85,
-          radius: 14
+          damage: 55,
+          radius: 10.5,
+          stun: 1.5,
+          cooldown: 185
         },
         upgrades: [
-          { name: "+10m Radius", points: 1 },
-          { name: "+40% Damage", points: 2 },
-          { name: "-30s Cooldown", points: 5 }
+          { name: "-35s Cooldown", points: 1 },
+          { name: "On Hero Hit: +100 Max HP and +15% Fire Rate", points: 2 },
+          { name: "On cast, become Unstoppable", points: 5 }
         ]
       }
     ],
@@ -205,11 +802,14 @@ export default function DeadlockBuildMaker() {
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [selectedItems, setSelectedItems] = useState(Array(12).fill(null));
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [hoverTimer, setHoverTimer] = useState(null);
   const [abilityUpgrades, setAbilityUpgrades] = useState({});
   const [expandedAbilities, setExpandedAbilities] = useState({ 0: true, 1: true, 2: true, 3: true });
   const [itemSelectorOpen, setItemSelectorOpen] = useState(false);
   const [selectedSlotIndex, setSelectedSlotIndex] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('gun');
+  const [selectedTier, setSelectedTier] = useState(1);
   const [damageModifiers, setDamageModifiers] = useState({});
 
   const addItemToSlot = (itemKey, slotIndex) => {
@@ -231,11 +831,19 @@ export default function DeadlockBuildMaker() {
     setItemSelectorOpen(true);
   };
 
-  const handleItemHover = (item) => {
+  const handleItemHover = (item, event) => {
     if (hoverTimer) clearTimeout(hoverTimer);
+    
+    const rect = event.currentTarget.getBoundingClientRect();
     const timer = setTimeout(() => {
       setHoveredItem(item);
-    }, 500);
+      // Position to the right of item, or left if too close to edge
+      const spaceOnRight = window.innerWidth - rect.right;
+      setTooltipPosition({
+        x: spaceOnRight > 420 ? rect.right + 10 : rect.left - 410,
+        y: Math.max(10, Math.min(rect.top, window.innerHeight - 600))
+      });
+    }, 350);
     setHoverTimer(timer);
   };
 
@@ -393,43 +1001,139 @@ export default function DeadlockBuildMaker() {
   const ItemSelector = () => {
     if (!itemSelectorOpen) return null;
 
+    // Organize items by category and tier
+    const organizedItems = {
+      gun: { 1: [], 2: [], 3: [], 4: [] },
+      vitality: { 1: [], 2: [], 3: [], 4: [] },
+      spirit: { 1: [], 2: [], 3: [], 4: [] }
+    };
+
+    Object.entries(itemData).forEach(([key, item]) => {
+      organizedItems[item.category][item.tier].push({ key, ...item });
+    });
+
+    const categoryConfig = {
+      gun: { 
+        label: 'Weapon',
+        bg: 'bg-amber-600',
+        activeBg: 'bg-amber-700',
+        itemBg: 'bg-amber-800',
+        border: 'border-amber-400',
+        text: 'text-amber-300'
+      },
+      vitality: { 
+        label: 'Vitality',
+        bg: 'bg-green-600',
+        activeBg: 'bg-green-700',
+        itemBg: 'bg-green-700',
+        border: 'border-green-400',
+        text: 'text-green-300'
+      },
+      spirit: { 
+        label: 'Spirit',
+        bg: 'bg-purple-600',
+        activeBg: 'bg-purple-700',
+        itemBg: 'bg-purple-700',
+        border: 'border-purple-400',
+        text: 'text-purple-300'
+      }
+    };
+
+    const currentItems = organizedItems[selectedCategory][selectedTier];
+    const config = categoryConfig[selectedCategory];
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-8">
-        <div className="bg-zinc-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-zinc-800 p-4 border-b border-zinc-700 flex justify-between items-center z-10">
-            <h2 className="text-2xl font-bold text-white">Select Item</h2>
+      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div className="bg-zinc-900 rounded-xl w-full max-w-6xl h-[85vh] flex flex-col">
+          {/* Header */}
+          <div className="bg-zinc-800 p-4 rounded-t-xl flex justify-between items-center border-b-2 border-zinc-700">
+            <h2 className="text-2xl font-bold text-white">Select Item - Slot {(selectedSlotIndex || 0) + 1}</h2>
             <button
               onClick={() => {
                 setItemSelectorOpen(false);
                 setSelectedSlotIndex(null);
-                handleItemLeave();
+                setHoveredItem(null);
               }}
-              className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 transition-colors"
+              className="bg-red-600 hover:bg-red-700 text-white rounded-lg px-4 py-2 font-semibold transition-colors"
             >
-              <X size={24} />
+              Close
             </button>
           </div>
-          
-          <div className="p-6 grid grid-cols-3 gap-4">
-            {Object.entries(itemData).map(([key, item]) => (
-              <div
-                key={key}
-                className="relative"
-                onMouseEnter={() => handleItemHover(item)}
-                onMouseLeave={handleItemLeave}
-              >
+
+          {/* Category Tabs */}
+          <div className="flex gap-2 p-4 bg-zinc-800">
+            {['gun', 'vitality', 'spirit'].map(cat => {
+              const catConfig = categoryConfig[cat];
+              const isActive = selectedCategory === cat;
+              return (
                 <button
-                  onClick={() => addItemToSlot(key, selectedSlotIndex)}
-                  className="w-full bg-zinc-700 hover:bg-zinc-600 rounded-lg p-4 text-left transition-all border-2 border-transparent hover:border-amber-500"
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`flex-1 py-3 rounded-lg font-bold text-lg transition-all ${
+                    isActive ? catConfig.activeBg : catConfig.bg
+                  } ${isActive ? 'ring-4 ring-white' : ''} text-white hover:opacity-90`}
                 >
-                  <div className="text-sm text-white font-semibold mb-1">{item.name}</div>
-                  <div className="text-xs text-green-400">${item.cost}</div>
-                  <div className="text-xs text-gray-400 mt-1">Tier {item.tier}</div>
+                  {catConfig.label}
                 </button>
+              );
+            })}
+          </div>
+
+          {/* Tier Tabs */}
+          <div className="flex gap-2 px-4 pb-4 bg-zinc-800">
+            {[1, 2, 3, 4].map(tier => {
+              const tierCosts = { 1: 800, 2: 1600, 3: 3000, 4: 6200 };
+              const isActive = selectedTier === tier;
+              const hasItems = organizedItems[selectedCategory][tier].length > 0;
+              
+              return (
+                <button
+                  key={tier}
+                  onClick={() => setSelectedTier(tier)}
+                  disabled={!hasItems}
+                  className={`flex-1 py-2 rounded-lg font-semibold transition-all ${
+                    isActive ? config.activeBg : 'bg-zinc-700'
+                  } ${isActive ? 'ring-2 ring-white' : ''} ${
+                    hasItems ? 'text-white hover:opacity-90' : 'text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Tier {tier} - ${tierCosts[tier]}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Items Grid */}
+          <div className="flex-1 bg-zinc-900 p-6 overflow-y-auto">
+            {currentItems.length === 0 ? (
+              <div className="text-center text-gray-400 text-xl mt-20">
+                No items available in this tier
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-5 gap-4">
+                {currentItems.map((item) => (
+                  <button
+                    key={item.key}
+                    onMouseEnter={(e) => handleItemHover(item, e)}
+                    onMouseLeave={handleItemLeave}
+                    onClick={() => addItemToSlot(item.key, selectedSlotIndex)}
+                    className={`${config.itemBg} border-2 ${config.border} rounded-lg p-4 hover:scale-105 transition-transform`}
+                  >
+                    <div className="text-white font-bold text-sm mb-2 min-h-[40px] flex items-center justify-center text-center">
+                      {item.name}
+                    </div>
+                    <div className="text-green-400 font-bold text-xs text-center">
+                      ${item.cost}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Hover Tooltip */}
+        {hoveredItem && <ItemTooltip item={hoveredItem} position={tooltipPosition} />}
       </div>
     );
   };
@@ -503,15 +1207,29 @@ export default function DeadlockBuildMaker() {
     );
   };
 
-  const ItemTooltip = ({ item }) => {
-    if (!item || !itemSelectorOpen) return null;
+  const ItemTooltip = ({ item, position }) => {
+    if (!item || !position) return null;
+    
+    const tooltipColors = {
+      gun: { header: 'bg-amber-500', border: 'border-amber-400', gradient: 'from-amber-600 to-amber-700' },
+      vitality: { header: 'bg-green-500', border: 'border-green-400', gradient: 'from-green-600 to-green-700' },
+      spirit: { header: 'bg-purple-500', border: 'border-purple-400', gradient: 'from-purple-600 to-purple-700' }
+    };
+    
+    const colors = tooltipColors[item.category];
     
     return (
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-96 bg-gradient-to-b from-amber-700 to-amber-800 rounded-lg shadow-2xl border-4 border-amber-600 z-50">
-        <div className="bg-amber-600 p-3 rounded-t-lg">
+      <div 
+        className={`fixed w-96 bg-gradient-to-b ${colors.gradient} rounded-lg shadow-2xl border-4 ${colors.border} z-[70] pointer-events-none`}
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`
+        }}
+      >
+        <div className={`${colors.header} p-3 rounded-t-lg`}>
           <h3 className="text-white font-bold text-xl">{item.name}</h3>
         </div>
-        <div className="p-4 bg-zinc-800 rounded-b-lg">
+        <div className="p-4 bg-zinc-800 rounded-b-lg max-h-[500px] overflow-y-auto">
           <div className="flex justify-between mb-3">
             <span className="text-white">Cost</span>
             <span className="text-green-400 font-bold">${item.cost}</span>
@@ -520,10 +1238,10 @@ export default function DeadlockBuildMaker() {
             <span className="text-white">Tier</span>
             <span className="text-white font-bold">{item.tier}</span>
           </div>
-          {item.stats && (
-            <div className="space-y-2 mb-3">
+          {item.stats && Object.keys(item.stats).length > 0 && (
+            <div className="space-y-1 mb-3">
               {Object.entries(item.stats).map(([stat, value]) => (
-                <div key={stat} className="text-amber-300">
+                <div key={stat} className="text-amber-300 text-sm">
                   +{value} {stat.replace(/([A-Z])/g, ' $1').trim()}
                 </div>
               ))}
@@ -532,18 +1250,56 @@ export default function DeadlockBuildMaker() {
           {item.passive && (
             <div className="mb-3">
               <div className="text-amber-400 font-semibold italic mb-1">Passive</div>
-              <div className="text-gray-300 text-sm">{item.passive}</div>
+              {typeof item.passive === 'string' ? (
+                <div className="text-gray-300 text-sm">{item.passive}</div>
+              ) : (
+                <div className="text-gray-300 text-sm">{item.passive.description || 'Passive effect'}</div>
+              )}
             </div>
           )}
           {item.active && (
-            <div>
+            <div className="mb-3">
               <div className="text-amber-400 font-semibold italic mb-1">Active</div>
-              <div className="text-gray-300 text-sm">{item.active}</div>
+              {typeof item.active === 'string' ? (
+                <div className="text-gray-300 text-sm">{item.active}</div>
+              ) : (
+                <>
+                  <div className="text-gray-300 text-sm">{item.active.description}</div>
+                  {item.active.cooldown && (
+                    <div className="text-gray-400 text-xs mt-1">Cooldown: {item.active.cooldown}s</div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          {item.description && (
+            <div className="mb-3">
+              <div className="text-gray-300 text-sm">{item.description}</div>
+            </div>
+          )}
+          {item.upgradesTo && item.upgradesTo.length > 0 && (
+            <div className="border-t border-zinc-700 pt-3">
+              <div className="text-white font-semibold mb-1">UPGRADES TO:</div>
+              {item.upgradesTo.map((upgrade, idx) => (
+                <div key={idx} className="text-amber-400 text-sm">{upgrade}</div>
+              ))}
+            </div>
+          )}
+          {item.upgradesFrom && item.upgradesFrom.length > 0 && (
+            <div className="border-t border-zinc-700 pt-3 mt-3">
+              <div className="text-white font-semibold mb-1">UPGRADES FROM:</div>
+              {item.upgradesFrom.map((upgrade, idx) => (
+                <div key={idx} className="text-amber-400 text-sm">{upgrade}</div>
+              ))}
             </div>
           )}
         </div>
       </div>
     );
+  };
+
+  const ItemTooltipContent = ({ item }) => {
+    return null; // Removed, using hover tooltip now
   };
 
   const AbilityPanel = ({ ability, index, characterKey }) => {
@@ -635,60 +1391,189 @@ export default function DeadlockBuildMaker() {
   const DamageCalculator = ({ characterKey }) => {
     const char = characterData[characterKey];
     const weaponBonus = getWeaponDamageBonus();
-    const baseGunDamage = char.stats.weapon.bulletDamage * (1 + weaponBonus / 100);
+    
+    // Collect all conditional stat modifiers
+    const conditionalModifiers = [];
+    
+    // Check items for conditional effects
+    selectedItems.forEach((itemKey, idx) => {
+      if (!itemKey) return;
+      const item = itemData[itemKey];
+      
+      // Check for conditional damage in item
+      if (item.conditionalDamage) {
+        conditionalModifiers.push({
+          id: `item_${idx}`,
+          label: `${item.name}: ${item.conditionalDamage.label}`,
+          ...item.conditionalDamage
+        });
+      }
+      
+      // Check for conditional passive effects
+      if (item.passive && item.passive.conditionLabel) {
+        conditionalModifiers.push({
+          id: `item_passive_${idx}`,
+          label: `${item.name}: ${item.passive.conditionLabel}`,
+          type: 'passive',
+          itemKey: itemKey,
+          ...item.passive
+        });
+      }
+    });
+    
+    // Check ability upgrades for conditional damage
+    char.abilities.forEach((ability, abilityIdx) => {
+      ability.upgrades.forEach((upgrade, upgradeIdx) => {
+        const upgradeKey = `${abilityIdx}-${upgradeIdx}`;
+        if (abilityUpgrades[upgradeKey] && upgrade.conditionalDamage) {
+          conditionalModifiers.push({
+            id: `ability_${abilityIdx}_${upgradeIdx}`,
+            label: `${ability.name}: ${upgrade.conditionalDamage.label}`,
+            ...upgrade.conditionalDamage
+          });
+        }
+      });
+    });
+    
+    // Calculate stats with active modifiers
+    const calculateModifiedStats = () => {
+      const baseGunDamage = char.stats.weapon.bulletDamage * (1 + weaponBonus / 100);
+      let modifiedGunDamage = baseGunDamage;
+      let bonusDamage = 0;
+      let sprintSpeed = char.stats.vitality.sprintSpeed;
+      
+      conditionalModifiers.forEach(mod => {
+        if (!damageModifiers[mod.id]?.active) return;
+        
+        // Apply weapon damage modifiers
+        if (mod.weaponDamageBonus) {
+          modifiedGunDamage += mod.weaponDamageBonus;
+        }
+        if (mod.weaponDamageMultiplier) {
+          modifiedGunDamage *= mod.weaponDamageMultiplier;
+        }
+        
+        // Apply bonus damage
+        if (mod.bonusDamageConditional) {
+          bonusDamage += mod.bonusDamageConditional;
+        }
+        
+        // Apply sprint speed modifiers
+        if (mod.sprintSpeedConditional) {
+          sprintSpeed += mod.sprintSpeedConditional;
+        }
+      });
+      
+      return {
+        baseGunDamage,
+        modifiedGunDamage,
+        bonusDamage,
+        sprintSpeed
+      };
+    };
+    
+    const stats = calculateModifiedStats();
     
     return (
       <div className="bg-zinc-800 rounded-xl p-6">
-        <h2 className="text-2xl font-bold text-white mb-4">Damage Calculator</h2>
+        <h2 className="text-2xl font-bold text-white mb-4">Adjusted Stats</h2>
         
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <h3 className="text-lg font-semibold text-amber-500 mb-3">Damage Modifiers</h3>
-            <div className="space-y-2">
-              {selectedItems.map((itemKey, idx) => {
-                if (!itemKey || !itemData[itemKey].damageModifier) return null;
-                const item = itemData[itemKey];
-                const modKey = `item_${idx}`;
-                
-                return (
-                  <label key={idx} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={damageModifiers[modKey]?.active || false}
-                      onChange={(e) => {
-                        setDamageModifiers(prev => ({
-                          ...prev,
-                          [modKey]: {
-                            active: e.target.checked,
-                            value: item.damageModifier.value,
-                            name: item.name
-                          }
-                        }));
-                      }}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-white text-sm">{item.name}</span>
-                    <span className="text-green-400 text-sm">
-                      {item.damageModifier.value > 0 ? '+' : ''}{item.damageModifier.value}%
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
+            <h3 className="text-lg font-semibold text-amber-500 mb-3">Conditional Modifiers</h3>
+            {conditionalModifiers.length === 0 ? (
+              <p className="text-gray-400 text-sm">No conditional modifiers available</p>
+            ) : (
+              <div className="space-y-2">
+                {conditionalModifiers.map((mod) => {
+                  let effectDescription = '';
+                  
+                  if (mod.weaponDamageBonus) {
+                    effectDescription = `+${mod.weaponDamageBonus} Weapon Damage`;
+                  }
+                  if (mod.weaponDamageMultiplier) {
+                    effectDescription = `+${((mod.weaponDamageMultiplier - 1) * 100).toFixed(0)}% Weapon Damage`;
+                  }
+                  if (mod.bonusDamageConditional) {
+                    effectDescription = `+${mod.bonusDamageConditional}% Bonus Damage`;
+                  }
+                  if (mod.sprintSpeedConditional) {
+                    effectDescription = `+${mod.sprintSpeedConditional}m/s Sprint Speed`;
+                  }
+                  
+                  return (
+                    <label key={mod.id} className="flex items-start gap-2 cursor-pointer p-2 bg-zinc-700 rounded hover:bg-zinc-600 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={damageModifiers[mod.id]?.active || false}
+                        onChange={(e) => {
+                          setDamageModifiers(prev => ({
+                            ...prev,
+                            [mod.id]: {
+                              active: e.target.checked,
+                              ...mod
+                            }
+                          }));
+                        }}
+                        className="w-4 h-4 mt-0.5 flex-shrink-0"
+                      />
+                      <div className="flex-1">
+                        <span className="text-white text-sm block">{mod.label}</span>
+                        <span className="text-green-400 text-xs">
+                          {effectDescription}
+                        </span>
+                        {mod.duration && (
+                          <span className="text-gray-400 text-xs ml-1">({mod.duration}s)</span>
+                        )}
+                        {mod.buffDuration && (
+                          <span className="text-gray-400 text-xs ml-1">({mod.buffDuration}s buff)</span>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold text-amber-500 mb-3">Calculated Damage</h3>
+            <h3 className="text-lg font-semibold text-amber-500 mb-3">Modified Stats</h3>
             <div className="space-y-3">
               <div className="bg-zinc-700 rounded-lg p-3">
                 <div className="text-red-400 font-semibold mb-2">Gun Damage</div>
-                <div className="text-white">
-                  Base: {baseGunDamage.toFixed(2)}
+                <div className="text-white text-sm">
+                  Base: {stats.baseGunDamage.toFixed(2)}
                 </div>
+                {stats.modifiedGunDamage !== stats.baseGunDamage && (
+                  <div className="text-green-400 text-sm font-bold mt-1">
+                    With Modifiers: {stats.modifiedGunDamage.toFixed(2)}
+                  </div>
+                )}
               </div>
               
+              {stats.bonusDamage > 0 && (
+                <div className="bg-zinc-700 rounded-lg p-3">
+                  <div className="text-orange-400 font-semibold mb-2">Bonus Damage</div>
+                  <div className="text-green-400 text-sm font-bold">
+                    +{stats.bonusDamage}%
+                  </div>
+                </div>
+              )}
+              
+              {stats.sprintSpeed !== char.stats.vitality.sprintSpeed && (
+                <div className="bg-zinc-700 rounded-lg p-3">
+                  <div className="text-blue-400 font-semibold mb-2">Sprint Speed</div>
+                  <div className="text-white text-sm">
+                    Base: {char.stats.vitality.sprintSpeed}m/s
+                  </div>
+                  <div className="text-green-400 text-sm font-bold mt-1">
+                    With Modifiers: {stats.sprintSpeed.toFixed(1)}m/s
+                  </div>
+                </div>
+              )}
+              
               {char.abilities.map((ability, idx) => {
-                const damage = calculateAbilityDamage(ability, damageModifiers);
+                const damage = calculateAbilityDamage(ability);
                 if (!damage) return null;
                 
                 return (
